@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("auth")
 public class AuthController {
 
     @Autowired
     private KhachHangService khachHangService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<DangKyResponse>> registerUser(@RequestBody DangKyRequest request) {
-        BaseResponse<DangKyResponse> response = khachHangService.dangKy(request);
-        return ResponseEntity.status(response.getTrangThai()).body(response);
+    public ResponseEntity<DangKyResponse> registerUser(@RequestBody DangKyRequest request) {
+        DangKyResponse response = khachHangService.dangKy(request);
+        return ResponseEntity.ok(response);
     }
 }

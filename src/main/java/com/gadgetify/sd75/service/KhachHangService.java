@@ -18,7 +18,7 @@ public interface KhachHangService {
     void xoaSanPhamKhoiGio(XoaSanPhamKhoiGioRequest request);
     void xoaGioHangHetHan();
 
-    BaseResponse<DangKyResponse> dangKy(DangKyRequest request);
+    DangKyResponse dangKy(DangKyRequest request);
     void xacMinhTaiKhoan(XacMinhTaiKhoanRequest request);
     DangNhapResponse dangNhap(DangNhapRequest request);
     void dangXuat(String token); // Đơn giản hóa: không cần logic phức tạp

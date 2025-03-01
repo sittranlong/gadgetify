@@ -3,24 +3,21 @@ package com.gadgetify.sd75.service.impl;
 import com.gadgetify.sd75.dto.request.*;
 import com.gadgetify.sd75.dto.response.*;
 import com.gadgetify.sd75.entity.*;
-import com.gadgetify.sd75.enums.ResponseCode;
+//import com.gadgetify.sd75.enums.ResponseCode;
 import com.gadgetify.sd75.mapper.GadgetifyMapper;
 import com.gadgetify.sd75.repository.*;
 import com.gadgetify.sd75.service.KhachHangService;
 import com.gadgetify.sd75.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,7 +70,9 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     private static final long GIO_HANG_HET_HAN_PHUT = 30;
     private static final long THOI_GIAN_HET_HAN_TOKEN_PHUT = 15;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public TrangChuResponse layTrangChu(TrangChuRequest request) {
@@ -333,7 +332,7 @@ public class KhachHangServiceImpl implements KhachHangService {
             throw new RuntimeException("Tài khoản chưa được xác minh");
         }
 
-        String token = jwtUtil.taoToken(nguoiDung.getMaNguoiDung(), nguoiDung.getVaiTro().getTenVaiTro());
+        String token = jwtUtil.taoToken(nguoiDung.getEmail(), nguoiDung.getVaiTro().getTenVaiTro());
         DangNhapResponse response = mapper.toDangNhapResponse(nguoiDung);
         response.setToken(token);
         return response;
@@ -394,17 +393,12 @@ public class KhachHangServiceImpl implements KhachHangService {
 
     @Override
     @Transactional
-    public BaseResponse<DangKyResponse> dangKy(DangKyRequest request) {
-        // Kiểm tra email đã tồn tại
-        if (nguoiDungRepository.findByEmail(request.getEmail()).isPresent()) {
-            return new BaseResponse<>(ResponseCode.BAD_REQUEST.getCode(), "Email đã được sử dụng", null);
-        }
+    public DangKyResponse dangKy(DangKyRequest request) {
+
 
         // Kiểm tra vai trò hợp lệ
         VaiTro vaiTro = vaiTroRepository.findVaiTroByTenVaiTro(request.getVaiTro()).orElse(null);
-        if (vaiTro == null) {
-            return new BaseResponse<>(ResponseCode.NOT_FOUND.getCode(), "Vai trò không hợp lệ", null);
-        }
+
 
         // Tạo tài khoản mới
         NguoiDung nguoiDung = new NguoiDung();
@@ -412,7 +406,7 @@ public class KhachHangServiceImpl implements KhachHangService {
         nguoiDung.setEmail(request.getEmail());
         nguoiDung.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
         nguoiDung.setSoDienThoai(request.getSoDienThoai());
-        nguoiDung.setTrangThai(true); // Chưa xác minh
+        nguoiDung.setTrangThai(false); // Chưa xác minh
         nguoiDung.setNgayTao(LocalDateTime.now());
         nguoiDung.setNgayCapNhat(LocalDateTime.now());
         nguoiDung.setProvider("LOCAL");
@@ -433,11 +427,11 @@ public class KhachHangServiceImpl implements KhachHangService {
 
         // Chuyển đổi sang response
         DangKyResponse response = mapper.toDangKyResponse(savedNguoiDung);
-        response.setThongBao("Ban da dang ki thanh cong !");
+        response.setThongBao("Vui lòng kiểm tra email để xác minh tài khoản");
 
         //gửi mail
 
-        return new BaseResponse<>(ResponseCode.SUCCESS.getCode(), "Đăng ký thành công! Vui lòng xác minh email.", response);
+        return response;
     }
 
 
